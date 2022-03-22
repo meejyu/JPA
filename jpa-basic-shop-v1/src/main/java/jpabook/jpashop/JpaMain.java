@@ -8,21 +8,24 @@ import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
 /**
- * 07. 고급 매핑 > 실전 예제 4 - 상속관계 매핑
- *
- * - 요구사항 추가
- * 상품의 종류는 음반, 도서, 영화가 있고 이후 더 확장될 수 있다.
- * 모든 데이터는 등록일과 수정일이 필수다.
+ EntityManagerFactory 애플리케이션이 로딩되는 시점에 딱 1개만 만들어야 한다.
+ EntityManager 실제 트랜잭션이 수행될때마다 생성한다.
+ 쓰레드간에 공유를 하면 안되고 트랜잭션이 수행된 이후에는 반드시 닫고 디비 커넥션을 반환해야한다.
+ EntityTransaction를 사용하여 커밋을 하는 순간 디비에 쿼리가 보내진다.
+ EntityManager는 데이터 변경시 트랜잭션을 시작해야한다. tx.begin();
  */
 public class JpaMain {
 
     public static void main(String[] args) {
+        // 커맨드 옵션 v = 변수명 자동완성
         EntityManagerFactory emf = Persistence.createEntityManagerFactory("hello");
 
         EntityManager em = emf.createEntityManager();
 
         EntityTransaction tx = em.getTransaction();
         tx.begin();
+
+        // 네이티브 쿼리는 jpa쿼리를 타지 않는다. 인서트, 딜리트를 안해줘서 따로 플러시 해줘야한다.
 
         try {
 

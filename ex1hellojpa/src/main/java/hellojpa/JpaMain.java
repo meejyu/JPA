@@ -18,30 +18,29 @@ public class JpaMain {
         tx.begin();
 
         try {
+            Member member1 = new Member();
+            member1.setUsername("memberA");
+            em.persist(member1);
 
-            Team team = new Team();
-            team.setName("teamA");
-            em.persist(team);
-
-            Member member = new Member();
-            member.setUsername("memberA");
-            member.setTeam(team);
-            em.persist(member);
+            Member member2 = new Member();
+            member2.setUsername("memberB");
+            em.persist(member2);
 
             em.flush();
             em.clear();
 
-            Member refMember = em.getReference(Member.class, member.getId());
+            Member m1 = em.find(Member.class, member1.getId());             //Member
+            Member m2 = em.getReference(Member.class, member2.getId());     //Proxy
 
-
-            // 초기화 전
-            System.out.println("isLoaded = " + util.isLoaded(refMember));
-
-            //refMember.getUsername();
-            //org.hibernate.Hibernate.initialize(refMember);
-
-            // 초기화 후
-            System.out.println("isLoaded = " + util.isLoaded(refMember));
+            /**
+             프록시를 사용할 경우 프록시 클래스(hellojpa.Member$HibernateProxy$7W3KQX3G)라고 뜨기 떄문에 == 으로 비교하면 false가 뜬다.
+             그러므로 instanceof Member를 사용하여 참조하기 위해 사용하였던 클래스를 찾아서 비교하여야 true가 뜬다.
+             */
+            System.out.println("m1 == m2 : " + (m1.getClass() == m2.getClass()));
+            System.out.println("m1 : "+ m1.getClass().getName());
+            System.out.println("m2 : "+ m2.getClass().getName());
+            System.out.println("m1 instanceof Member : " + (m1 instanceof Member));
+            System.out.println("m2 instanceof Member : " + (m2 instanceof Member));
 
             tx.commit();
 
