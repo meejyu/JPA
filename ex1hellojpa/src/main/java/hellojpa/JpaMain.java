@@ -18,57 +18,29 @@ public class JpaMain {
         tx.begin();
 
         try {
+            /**
+             * cascade가 걸려있으면 굳이 em.persist 두번 안해도됨
+             */
+            Parent parent = new Parent();
+            parent.setName("parent");
 
-            Team teamA = new Team();
-            teamA.setName("teamA");
-            em.persist(teamA);
+            Child child = new Child();
+            child.setName("child");
+            child.setParent(parent);
+            parent.getChildren().add(child);
+            em.persist(parent);
 
-            Team teamB = new Team();
-            teamB.setName("teamA");
-            em.persist(teamB);
-
-            Member member1 = new Member();
-            member1.setUsername("member1");
-            member1.setTeam(teamA);
-            em.persist(member1);
-
-            Member member2 = new Member();
-            member2.setUsername("member2");
-            member2.setTeam(teamB);
-            em.persist(member2);
-            
             em.flush();
             em.clear();
 
+            Parent findParent = em.find(Parent.class, parent.getId());
+            findParent.getChildren().remove(0);
 
-            /**
-             * 즉시로딩과 지연로딩!
-             * 지연로딩은 필요할때 객체를 불러와 로딩한다!!
-             * 팀을 지연로딩으로 했을떄 팀을불러올떄 로딩한다.
-             * 즉시로딩은 조인되있는 컬럼 몽땅다 가져옴!!
-             Member member = em.find(Member.class, member1.getId());
-             member.getTeam().getName();
-             * */
+//            List<Child> result = parent.getChildren();
+//
+//            Child findChild = result.get(0);
+//            System.out.println("findChild = " + findChild.getName());
 
-            System.out.println("단건 조회");
-            Member findMember = em.find(Member.class, member1.getId());
-
-            // m을 프로제션이라고함 select 다음에 오는거
-            /**
-            *
-            */
-            System.out.println("jpql 조회");
-            List<Member> result = em.createQuery("select m from Member m").getResultList();
-
-            /**
-             * 지연 로딩과 즉시로딩을 하면 하면 N+1 문제가 있음
-             * N+1 문제에 대해 좀 더 검색해볼것
-             * 패치 조인을 사용해서 하면 해결됨,,! => 조인 쿼리를 날린다고 생각하면 됨!
-             */
-            for (Member member : result) {
-                System.out.println("member.getUsername() = " + member.getUsername());
-            }
-             
             tx.commit();
 
         } catch (Exception e) {
