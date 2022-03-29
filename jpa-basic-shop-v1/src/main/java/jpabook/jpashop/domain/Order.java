@@ -5,6 +5,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static javax.persistence.CascadeType.ALL;
+import static javax.persistence.FetchType.LAZY;
+
 // @Table 에 name 을 적은 이유는
 // 특정 DB 의 경우 'Order' 가 예약어로 걸려 있어
 // 테이블명으로 사용할 수 없으므로 ORDER 로 설정해줌.
@@ -20,12 +23,13 @@ public class Order extends BaseEntity {
     @JoinColumn(name = "member_id")
     private Member member;
 
-    @OneToOne
+    //비즈니스 적으로 많이 사용하는 테이블에 cascade를 주면
+    @OneToMany(mappedBy = "order", cascade = ALL)
+    private List<OrderItem> orderItems = new ArrayList<>();
+
+    @OneToOne(fetch = LAZY, cascade = ALL)
     @JoinColumn(name = "delivery_id")
     private Delivery delivery;
-
-    @OneToMany(mappedBy = "order")
-    private List<OrderItem> orderItems = new ArrayList<>();
 
     // @Column name 없이 DDL 실행시
     //

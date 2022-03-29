@@ -4,6 +4,8 @@ import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static javax.persistence.FetchType.LAZY;
+
 @Entity
 public class Category extends BaseEntity {
 
@@ -19,7 +21,7 @@ public class Category extends BaseEntity {
     보는 관점을 기준으로 Many와 One이 정해진다!!
     parent의 관점에서 child는 Many고, parent는 One이니까 @ManyToOne이 맞음!
      */
-    @ManyToOne
+    @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "parent_id")
     private Category parent;
 
