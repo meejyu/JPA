@@ -12,6 +12,7 @@ public class Team {
 
     private String name;
 
+    // ToMany 일경우에는 레이지 전략을 굳이 안적어도 됨!
     @OneToMany(mappedBy = "team", fetch = FetchType.LAZY)
     private List<Member> members = new ArrayList<Member>();
 
