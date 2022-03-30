@@ -15,7 +15,7 @@ public class Parent {
     // ALL PERSIST REMOVE만 사용함 대부분
     // orphanRemoval 고아객체를 자동으로 삭제해주는거, 컬렉션에서 지워주면 자동으로 삭제, CascadeType.REMOVE 처럼 동작한다고 보면됨!!
     // 부모가 한명일떄만,,! 게시판 댓글, 카테고리,
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = false)
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Child> children = new ArrayList<>();
 
     public Long getId() {
@@ -40,5 +40,13 @@ public class Parent {
 
     public void setChildren(List<Child> children) {
         this.children = children;
+    }
+
+    public void addChild(Child child) {
+        children.add(child);
+        if(!this.children.contains(child)) {
+            children.add(child);
+        }
+        child.setParent(this);
     }
 }
