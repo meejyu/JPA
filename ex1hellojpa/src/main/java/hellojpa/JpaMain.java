@@ -5,6 +5,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import java.util.List;
+import java.util.Set;
 
 public class JpaMain {
 
@@ -18,49 +19,60 @@ public class JpaMain {
         tx.begin();
 
         try {
-            /**
-             * cascade가 걸려있으면 굳이 em.persist 두번 안해도됨
-             * cascade를 사용하여 child의 생명주기를 Parent에서 관리
-             **/
-            Member member = new Member();
-            member.setUsername("member1");
-            em.persist(member);
 
-            Child child1 = new Child();
-            child1.setName("child1");
-            Child child2 = new Child();
-            child2.setName("child2");
-
-            List<Member> resultList = em.createNativeQuery("select MEMBER_ID, city, street, zipcode, USERNAME from MEMBER", Member.class)
-                                    .getResultList();
-
-            Parent parent = new Parent();
-            parent.setName("parent");
-            parent.addChild(child1);
-            parent.addChild(child2);
-            System.out.println("1번");
-            for (Member member1 : resultList) {
-                System.out.println("member1 = " + member1.getUsername());
-            }
-            System.out.println("2번");
-            // 시퀀스를 부른다
-            em.persist(parent);
-            System.out.println("3번");
-            // 플러시할때 디비로 쿼리문이 날라감
-            em.flush();
-            System.out.println("너는 모하니");
-            em.clear();
-            System.out.println("4번");
-            Parent findParent = em.find(Parent.class, parent.getId());
-            System.out.println("5번");
-            findParent.getChildren().remove(0);
-            System.out.println("6번");
-//            List<Child> result = parent.getChildren();
+            Address addr1 = new Address("city", "street", "100000");
+//            Address addr2 = new Address(addr1.getCity(), addr1.getStreet(), addr1.getZipcode());
 //
-//            Child findChild = result.get(0);
-//            System.out.println("findChild = " + findChild.getName());
+//            /*
+//            * equals에 대해 알아보기 jpa 분석하는거
+//            * equals, hashcode
+//            * */
+//            System.out.println("addr1 == addr2 " + addr1.equals(addr2));
+//
+//            Member member1 = new Member();
+//            member1.setUsername("member1");
+//            member1.setHomeAddress(new Address("city", "street", "100000"));
+//            member1.setWorkAddress(addr2);
+//            em.persist(member1);
+
+            /**
+             * 값 타입 컬렉션 저장
+             */
+            Member member1 = new Member();
+            member1.setUsername("member2");
+            member1.getFavoriteFoods().add("치킨");
+            member1.getFavoriteFoods().add("족발");
+            member1.getFavoriteFoods().add("피자");
+            member1.getAddressHistory().add(new Address("oldCity1", "street1", "100000"));
+            member1.getAddressHistory().add(new Address("oldCity2", "street2", "200000"));
+            em.persist(member1);
+
+            em.flush();
+            em.clear();
+
+            Member findMember = em.find(Member.class, member1.getId());
+            Set<String> favoriteFoods = findMember.getFavoriteFoods();
+            for(String favoriteFood : favoriteFoods) {
+                System.out.println("favoriteFood = " + favoriteFood);
+            }
+
+
+            findMember.getFavoriteFoods().remove("족발");
+            findMember.getFavoriteFoods().add("초밥");
+
+
+            Member findMember2 = em.find(Member.class, member1.getId());
+            findMember2.getAddressHistory().remove(addr1);
+
+            //            List<Address> addressHistory = findMember2.getAddressHistory();
+//            for(Address address : addressHistory) {
+//                System.out.println("address = " + address.getCity());
+//            }
+
+            //체크박스일 경우에만 사용한다. 컬렉션은~
 
             tx.commit();
+
 
         } catch (Exception e) {
             tx.rollback();
