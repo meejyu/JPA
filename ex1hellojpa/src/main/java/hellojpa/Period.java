@@ -3,8 +3,11 @@ package hellojpa;
 import javax.persistence.Embeddable;
 import java.time.LocalDateTime;
 
+/**
+ * 값 타입을 정의하는 곳에 표시
+ */
 @Embeddable
-public class Priod {
+public class Period {
 
     private LocalDateTime startDate;
     private LocalDateTime endDate;

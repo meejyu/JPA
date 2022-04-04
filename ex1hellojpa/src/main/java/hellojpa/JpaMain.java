@@ -64,10 +64,10 @@ public class JpaMain {
             Member findMember2 = em.find(Member.class, member1.getId());
             findMember2.getAddressHistory().remove(addr1);
 
-            //            List<Address> addressHistory = findMember2.getAddressHistory();
-//            for(Address address : addressHistory) {
-//                System.out.println("address = " + address.getCity());
-//            }
+                        List<Address> addressHistory = findMember2.getAddressHistory();
+            for(Address address : addressHistory) {
+                System.out.println("address = " + address.getCity());
+            }
 
             //체크박스일 경우에만 사용한다. 컬렉션은~
 
