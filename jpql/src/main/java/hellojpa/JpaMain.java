@@ -1,11 +1,7 @@
 package hellojpa;
 
 import javax.persistence.*;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
 import java.util.List;
-import java.util.Set;
 
 public class JpaMain {
 
@@ -19,30 +15,58 @@ public class JpaMain {
         tx.begin();
 
         try {
+            Team team = new Team();
+            team.setName("teamA");
+            em.persist(team);
 
-            Team teamA = new Team();
-            teamA.setName("teamA");
-            em.persist(teamA);
+            for (int i = 0; i < 100; i++) {
+                Member member = new Member();
+                member.setUsername("member"+i);
+                member.setTeam(team);
+                member.setAge(i);
 
-            Member member1 = new Member();
-            member1.setUsername("member1");
-            member1.setTeam(teamA);
-            em.persist(member1);
+                em.persist(member);
+            }
 
             em.flush();
-            em.clear();
+            em.clear();     //영속성 컨텍스트 초기화
+
+            List result = em.createQuery("select m from Member m" +
+                    " where exists (select t from m.team t where t.name = 'teamA')", Member.class)
+                    .getResultList();
+
+            for (Object o : result) {
+                System.out.println("member = " + o);
+            }
 
 //            List<Member> result = em.createQuery("select m from Member m", Member.class)
 //                    .getResultList();
 
-            List<Member> result = em.createNativeQuery("select * from Member", Member.class)
-                .getResultList();
+            //조회하는 대상이 명확할떄는 타입쿼리를 써줘라
+            // 두번째 인자에 명시를 해주면 타입쿼리 아니면 그냥 쿼리
 
 
-            for (Member m : result) {
-                System.out.println("m = " + m.getTeam().getClass());
-                m.setUsername("memberA");
-            }
+
+            //조인쿼리가 나가는데 조인쿼리에 대한 내용이 없음, jpql에 조심해야함, 묵시적 조인
+            // 그래서 묵시적 조인은 안쓰는게 좋음,,!!! 명시적 조인으로 사용,,!
+//            UserDto singleResult = em.createQuery("select new hellojpa.UserDto(m.username, m.age) from Member m", UserDto.class).getSingleResult();
+
+            //스칼라 타입 조회 하는 방법 2번
+//            Object[] singleResult = em.createQuery("select m.username, m.age from Member m", Object[].class).getSingleResult();
+
+            //스칼라 타입 조회 하는 방법 1번
+//            Object[] temp = (Object[]) result;
+
+//            System.out.println("result = " + singleResult[0]);
+//            System.out.println("result = " + singleResult);
+
+
+
+
+//            // iter로 하면 for 단축키 사용가능
+//            for (Member member : result) {
+//                System.out.println("member = " + member);
+//            }
 
         } catch (Exception e) {
             tx.rollback();
