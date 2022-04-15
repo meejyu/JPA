@@ -1,6 +1,7 @@
 package hellojpa;
 
 import javax.persistence.*;
+import java.util.Collection;
 import java.util.List;
 
 public class JpaMain {
@@ -19,25 +20,66 @@ public class JpaMain {
             team.setName("teamA");
             em.persist(team);
 
-            for (int i = 0; i < 100; i++) {
-                Member member = new Member();
-                member.setUsername("member"+i);
-                member.setTeam(team);
-                member.setAge(i);
+            Product product = new Product();
+            product.setName("상품이름");
+            product.setPrice(10000);
+            product.setStockAmount(100);
+            em.persist(product);
 
-                em.persist(member);
-            }
+
+//            for (int i = 0; i < 10; i++) {
+//                Member member = new Member();
+//                member.setUsername("member"+i);
+//                member.setMemberType(MemberType.USER);
+//                member.setTeam(team);
+//                member.setAge(i);
+//
+//                em.persist(member);
+//            }
+
+            Member member2 = new Member();
+            member2.setUsername("member"+00011);
+            member2.setMemberType(MemberType.USER);
+            member2.setTeam(team);
+            member2.setAge(00011);
+
+            Member member1 = new Member();
+            member1.setUsername("member"+000);
+            member1.setMemberType(MemberType.USER);
+            member1.setTeam(team);
+            member1.setAge(000);
+
+            em.persist(member1);
+            em.persist(member2);
+
+            Order order = new Order();
+            order.setAddress(new Address("city", "dsf", "dsfdsf"));
+            order.setMember(member1);
+            order.setProduct(product);
+            order.setOrderAmount(1);
+
+            Order order1 = new Order();
+            order1.setAddress(new Address("city2", "dsf2", "dsfdsf2"));
+            order1.setMember(member2);
+            order1.setProduct(product);
+            order1.setOrderAmount(2);
+
+            em.persist(order1);
+            em.persist(order);
 
             em.flush();
             em.clear();     //영속성 컨텍스트 초기화
 
-            List result = em.createQuery("select m from Member m" +
-                    " where exists (select t from m.team t where t.name = 'teamA')", Member.class)
+            // 묵시적 조인은 사용하면 안됨, 묵시적 내부조인 발생, 탐색가능하나 사용하면 안됨.
+            // jpa가 탐색을 못하게함.
+            // 해결하기 위해서 명시적 조인을 해
+            List<Member> result = em.createQuery("select t.members from Team", Member.class)
                     .getResultList();
 
-            for (Object o : result) {
-                System.out.println("member = " + o);
+            for (Object s : result) {
+                System.out.println("s = " + s);
             }
+
 
 //            List<Member> result = em.createQuery("select m from Member m", Member.class)
 //                    .getResultList();
