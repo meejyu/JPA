@@ -2,6 +2,7 @@ package hellojpa;
 
 import javax.persistence.*;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class JpaMain {
@@ -16,99 +17,89 @@ public class JpaMain {
         tx.begin();
 
         try {
-            Team team = new Team();
-            team.setName("teamA");
-            em.persist(team);
+            Team teamA = new Team();
+            teamA.setName("팀A");
+            em.persist(teamA);
 
-            Product product = new Product();
-            product.setName("상품이름");
-            product.setPrice(10000);
-            product.setStockAmount(100);
-            em.persist(product);
-
-
-//            for (int i = 0; i < 10; i++) {
-//                Member member = new Member();
-//                member.setUsername("member"+i);
-//                member.setMemberType(MemberType.USER);
-//                member.setTeam(team);
-//                member.setAge(i);
-//
-//                em.persist(member);
-//            }
-
-            Member member2 = new Member();
-            member2.setUsername("member"+00011);
-            member2.setMemberType(MemberType.USER);
-            member2.setTeam(team);
-            member2.setAge(00011);
+            Team teamB = new Team();
+            teamB.setName("팀B");
+            em.persist(teamB);
 
             Member member1 = new Member();
-            member1.setUsername("member"+000);
-            member1.setMemberType(MemberType.USER);
-            member1.setTeam(team);
-            member1.setAge(000);
-
+            member1.setUsername("회원1");
+            member1.setAge(20);
+            member1.setTeam(teamA);
             em.persist(member1);
+
+            Member member2 = new Member();
+            member2.setUsername("회원2");
+            member2.setAge(30);
+            member2.setTeam(teamA);
             em.persist(member2);
 
-            Order order = new Order();
-            order.setAddress(new Address("city", "dsf", "dsfdsf"));
-            order.setMember(member1);
-            order.setProduct(product);
-            order.setOrderAmount(1);
-
-            Order order1 = new Order();
-            order1.setAddress(new Address("city2", "dsf2", "dsfdsf2"));
-            order1.setMember(member2);
-            order1.setProduct(product);
-            order1.setOrderAmount(2);
-
-            em.persist(order1);
-            em.persist(order);
+            Member member3 = new Member();
+            member3.setUsername("회원3");
+            member3.setAge(40);
+            member3.setTeam(teamB);
+            em.persist(member3);
 
             em.flush();
-            em.clear();     //영속성 컨텍스트 초기화
+            em.clear();
 
-            // 묵시적 조인은 사용하면 안됨, 묵시적 내부조인 발생, 탐색가능하나 사용하면 안됨.
-            // jpa가 탐색을 못하게함.
-            // 해결하기 위해서 명시적 조인을 해
-            List<Member> result = em.createQuery("select t.members from Team", Member.class)
-                    .getResultList();
+            String query11 = "select m.username from Team t join t.members m";
 
-            for (Object s : result) {
-                System.out.println("s = " + s);
+            List<String> result11 = em.createQuery(query11, String.class).getResultList();
+            System.out.println("result11 = " + result11);
+
+            System.out.println("================================패치 조인==========================================");
+            // 패치 조인인 = inner 조인 완전히 일치하는 값만 가져옴,,! 지연 로딩 X
+            // 팀 데이터도 같이 출력
+            String query = "select m from Member m join fetch  m.team";
+            List<Member> result = em.createQuery(query, Member.class).getResultList();
+
+            for (Member member : result) {
+                System.out.println("member = " + member.getUsername() + " , team = "+member.getTeam().getName());
+            }
+
+            System.out.println("==============================컬렉션 조인============================================");
+            // 일대다 관계, 컬렉션 패치 조인
+            String query2 = "select t from Team t join fetch t.members";
+
+            List<Team> result2 = em.createQuery(query2, Team.class).getResultList();
+            for (Team team : result2) {
+                System.out.println("team = " + team.getMembers().getClass());
+                System.out.println("team = " + team.getName() + ", members = " + team.getMembers().size());
+
+                for (Member member : team.getMembers()) {
+                    System.out.println("member = " + member);
+                }
+            }
+
+            System.out.println("====================일반 조인과 패치 조인의 차이======================================================");
+
+            // distinct 완전히 일치 할때 삭제함. JPA는 삭제해줌,! sql은 삭제 안해줌!!
+            // fetch 조인은 다 가져와야함,,! 그래서 alias도 쓰면 안되고 다 쓰면 안댐,,!
+            String query3 = "select t from Team t join t.members m";
+            List<Team> result3 = em.createQuery(query2, Team.class).getResultList();
+
+            int i = 0;
+            for (Team team : result3) {
+                if(i==0) {
+                    //  일대다로 가져온 컬렉션은 프록시 아님
+                    // 결과 : team.getMembers().getClass() = class org.hibernate.collection.internal.PersistentBag
+                    System.out.println("team.getMembers().getClass() = " + team.getMembers().getClass());
+                }
+
+                // N + 1 문제 발생!
+                System.out.println("team.getName() = " + team.getName() + " | members = " + team.getMembers().size());
+                for (Member member : team.getMembers()) {
+                    System.out.println("member = " + member);
+                }
+                i++;
             }
 
 
-//            List<Member> result = em.createQuery("select m from Member m", Member.class)
-//                    .getResultList();
-
-            //조회하는 대상이 명확할떄는 타입쿼리를 써줘라
-            // 두번째 인자에 명시를 해주면 타입쿼리 아니면 그냥 쿼리
-
-
-
-            //조인쿼리가 나가는데 조인쿼리에 대한 내용이 없음, jpql에 조심해야함, 묵시적 조인
-            // 그래서 묵시적 조인은 안쓰는게 좋음,,!!! 명시적 조인으로 사용,,!
-//            UserDto singleResult = em.createQuery("select new hellojpa.UserDto(m.username, m.age) from Member m", UserDto.class).getSingleResult();
-
-            //스칼라 타입 조회 하는 방법 2번
-//            Object[] singleResult = em.createQuery("select m.username, m.age from Member m", Object[].class).getSingleResult();
-
-            //스칼라 타입 조회 하는 방법 1번
-//            Object[] temp = (Object[]) result;
-
-//            System.out.println("result = " + singleResult[0]);
-//            System.out.println("result = " + singleResult);
-
-
-
-
-//            // iter로 하면 for 단축키 사용가능
-//            for (Member member : result) {
-//                System.out.println("member = " + member);
-//            }
+            tx.commit();
 
         } catch (Exception e) {
             tx.rollback();
