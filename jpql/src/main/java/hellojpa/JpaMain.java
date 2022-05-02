@@ -63,6 +63,17 @@ public class JpaMain {
 
             System.out.println("==============================컬렉션 조인============================================");
             // 일대다 관계, 컬렉션 패치 조인
+            /**
+             * 일대다 관계 패치 조인을 데이터 뻥튀기가 될수 있다.
+             * 예를 들어 teamA와 teamB가 있는데
+             * teamA의 회원이 2명이고 teamB의 회원이 1명이면
+             * temaA의 회원이 2명이므로 row가 두줄이 되서 값이 두개가 나온다.
+             * 아래의 쿼리문의 실행 결과
+             *     ID  	NAME  	ID  	AGE  	MEMBERTYPE  	USERNAME  	TEAM_ID
+             *     1	 팀A	 3	    20	    null	        회원1	        1
+             *     1	 팀A	 4	    30	    null	        회원2	        1
+             *     2	 팀B	 5	    40	    null	        회원3	        2
+             */
             String query2 = "select t from Team t join fetch t.members";
 
             List<Team> result2 = em.createQuery(query2, Team.class).getResultList();
@@ -77,10 +88,14 @@ public class JpaMain {
 
             System.out.println("====================일반 조인과 패치 조인의 차이======================================================");
 
-            // distinct 완전히 일치 할때 삭제함. JPA는 삭제해줌,! sql은 삭제 안해줌!!
-            // fetch 조인은 다 가져와야함,,! 그래서 alias도 쓰면 안되고 다 쓰면 안댐,,!
-            String query3 = "select t from Team t join t.members m";
             List<Team> result3 = em.createQuery(query2, Team.class).getResultList();
+
+            /**
+             fetch 조인은 다 가져와야함,,! 그래서 alias도 쓰면 안되고 다 쓰면 안댐,,!
+             distinct 완전히 일치 할때 삭제함. JPA는 삭제해줌,! sql은 삭제 안해줌!!
+             * 여기도 뻥튀기 발생함,,,!
+             */
+            String query3 = "select t from Team t join t.members m";
 
             int i = 0;
             for (Team team : result3) {
