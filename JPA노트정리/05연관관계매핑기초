@@ -1,0 +1,99 @@
+### 연관관계 매핑 기초
+
+1. 연관관계가 필요한 이유
+    - 테이블은 외래 키로 조인을 사용해서 연관된 테이블을 찾는다
+    - 객체는 참조를 사용해서 연관된 객체를 찾는다.
+    - 테이블과 객체 사이에는 이런 큰 간격이 있다.
+
+2. 단방향 연관관계
+    객체지향 모델링
+    @ManyToOne
+    @JoinColumn(name = "TEAM_ID")
+    private Team team;
+    
+    연관관계 저장
+    Team team = new Team();
+    team.setName("TeamA");
+    em.persist(team);
+
+    Member member = new Member();
+    member.setName("member1");
+    member.setTeam(team); // 단방향 연관관계 설정, 참조 저장
+    em.persist(member);
+
+    객체 그래프 탐색
+    Team findTeam = findMember.getTeam();
+
+    연관관계 수정
+    Team teamB = new Team();
+    teamB.setName("TeamB");
+    em.persist(teamB);
+
+    member.setTeam(teamB);
+
+3. 양방향 연관관계와 연관관계의 주인
+    
+    class Member
+
+    @ManyToOne
+    @JoinColumn(name = "TEAM_ID")
+    private Team team;
+
+    class Team
+
+    @OneToMany(mappedBy = "team")
+    List<Member> members = new ArrayList<Member>();
+
+    반대 방향으로 객체 그래프 탐색
+    Team findTeam = em.find(Team.class, team.getId());
+    int memberSize = findTeam.getMembers().size(); // 역방향 조회
+
+    객체의 관점으로 보았을때
+        회원 객체가 팀 객체에 대해 연간관계를 1개 맺음(단방향)
+        팀 객체가 회원 객체에 대해 연관관계를 1개 맺음(단방향)
+    테이블 관전으로 보았을때
+        회원 테이블과 팀 테이블이 서로 양방향 연관관계를 맺음(양방향)
+    
+    연관관계의 주인
+    양방향 매핑 규칙
+        객체의 두 관계중 하나를 연관관계의 주인으로 지정
+        연관관계의 주인만이 외래 키를 관리(등록, 수정)
+        주인이 아닌쪽은 읽기만 가능
+        주인은 mappedBy 속성 사용 안함
+        주인이 아니면 mappedBy 속성으로 주인 지정
+    
+    주인 정하는 규칙
+    - 외래키가 있는 곳을 주인으로 정함.
+    
+    양방향 매핑시 연관관계의 주인에 값을 입력해야한다.
+    Team team = new Team();
+    team.setName("TeamA");
+    em.persist(team);
+
+    Member member = new Member();
+    member.setName("member1");
+
+    team.getMembers().add(member);
+    //연관관계의 주인에 값 설정
+    member.setTeam(team);
+
+    em.persist(member);
+
+    양방향 매핑은 반대 방향으로 조회 기능이 추가된것
+
+    주인 클래스
+    @JoinColumn(name = "외래키명")
+    Order order;
+    외래키명을 매핑할떄 사용한다. 
+
+    주인이 아닌 클래스 
+    @ManyToOne(mappedBy = "order")
+    mappedBy는 리드 온니라고 보면 되며, 주인의 변수명을 적는다.
+
+    
+
+
+
+    
+
+

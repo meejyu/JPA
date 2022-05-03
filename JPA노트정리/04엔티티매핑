@@ -1,0 +1,28 @@
+### 엔티티 매핑
+
+1. 객체와 테이블 매핑
+    - @Entity
+        - JPA가 관리, 엔티티라 한다.
+        - JPA를 사용해서 테이블과 매핑할 클래스는 @Entity 필수
+        - 기본 생성자 필수(파라미터가 없는 public 또는 protected 생성자)
+        - final, enum, interface, inner 클래스 사용X
+        - 저장할 필드에 final 사용X
+
+2. @Entity
+    속성 : name
+    JPA에서 사용할 엔티티 이름을 지정한다.
+    기본값 : 클래스 이름을 그대로 사용
+    같은 클래스 이름이 없으면 가급적 기본값으 사용한다.
+
+3. @Table
+    @Table은 엔티티와 매핑할 테이블 지정
+    name : 매핑할 테이블 이름, 엔티티 이름을 사용
+    catalog, schema를 매핑
+    uniqueConstraints(DDL) 유니크 제쟉 조건 생성
+
+4. 데이터베이스 스키마 자동 생성
+    - DDL(테이블 관리, 생성, 삭제 등)을 애플리케이션 실행 시점에 자동 생성
+    - create : 기존 테이블 삭제 후 다시 생성 (Drop + create)
+    - create-drop : create와 같으나 종료시점에 테이블 drop    
+
+    

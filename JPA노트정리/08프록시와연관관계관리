@@ -1,0 +1,123 @@
+프록시와 연관관계 관리
+
+프록시란?
+- 지연로딩을 이해하려면 프록시의 개념에 대해서 이해해야한다.
+- 실제 클래스를 상속 받아서 만들어진다.
+- 프록시 객체는 실제 객체의 참조를 보관한다.
+- 프록시 객체는 호출하면 프록시 객체는 실제 객체의 메소드를 호출한다.
+- em.getReference()는 DB의 조회를 미루는 가짜(프록시) 엔티티 객체를 조회하는 메소드이다.
+- 데이터가 실제로 필요한 시점( ex : findMember.username을 했을 경우)에 
+    데이터베이스가 나가기때문에 em.getReference() 때는 데이터가 나가지 않음.
+
+프록시의 특징
+- 실제 클래스를 상속 받아서 만들어진다.
+    - 하이버네이트가 내부적으로 상속 받아서 만든다
+- 실제 클래스와 겉 모양이 같다
+- 사용하는 입장에서는 진짜 객체인지 프록시 객체인지 구분하지 않고 사용하면 된다.
+- 프록시 객체는 실제 객체의 참조를 보관한다.
+- 프록시 객체를 호출하면 프록시 객체는 실제 객체의 메소드를 호출한다.
+- 프록시 객체는 처음 사용할 떄 한번만 초기화 된다
+- 프록시 객체를 초기화 할 때, 프록시 객체가 실제로 엔티티로 바뀌는 것은 아니다.
+- 프록시 객체는 원본 엔티티를 상속 받음, 따라서 타입 체크시 주의해야함( == 이 아니라 instanceof로 비교를 해야함)
+- 영속성 컨텍스트에 찾는 엔티티가 이미 있으면 em.getReference()를 호출해도 실제 엔티티 반환
+    - 초기화 되면 프록시 객체를 통해서 실제 엔티티에 접근 가능하다.
+    - 정확히 말하면 targer에 값이 채워지는 것 뿐이다.
+    - em.getReference()로 조회한 클래스를 getClass()로 보면, HibernateProxy 클래스였던 것을 위에서 학습했다.
+
+프록시 예시
+Member member1 = new Member();
+member1.setUsername("memberA");
+em.persist(member1);
+
+Member member2 = new Member();
+member2.setUsername("memberB");
+em.persist(member2);
+
+em.flush();
+em.clear();
+
+Member m1 = em.find(Member.class, member1.getId());             // Member
+Member m2 = em.getReference(Member.class, member2.getId());     // Proxy
+
+System.out.println("m1 == m2 : "+ (m1.getClass() == m2.getClass()));
+
+System.out.println("m1 : " + (m1 instanceof Member));
+System.out.println("m2 : "+ (m2 instanceof Member));
+
+tx.commit();
+
+결과 : 
+m1 == m2 : false
+m1 : true
+m2 : true
+
+프록시 확인
+- 프록시 인스턴스의 초기화 여부 확인
+    PersistenceUnitUtil.isLoaded(Object entity)
+- 프록시 클래스 확인 방법
+    entity.getClass.getName() 출력
+- 프록시 강제 초기화
+    org.hibernate.Hibernate.initialize(entity);
+- JPA 표준은 강제 초기화 없음, 강제 호출 : member.getName()
+
+
+프록시 문제
+- 영속성 컨텍스트의 도움을 받을 수 없는 준영속 상태일 때, 초기화 문제가 발생한다.
+- 트랜잭션의 범위 밖에서 프록시 객체를 조회하려고 할때 LazyInitializationException 예외를 터트린다.
+
+즉시 로딩과 지연 로딩
+- 지연 로딩 LAZY을 사용해서 프록시로 조회
+ex) Member member = em.find(Member.class, 1L);
+Team team = member.getTeam();
+team.getName(); // 실제 team을 사용하는 시점에 초기화(DB 조회)
+
+- 즉시 로딩
+member 객체를 조회해도 항상 team 객체가 함께 조회 되는것
+
+프록시와 즉시로딩 주의
+- 가급적이면 항상 지연로딩만 사용할것
+- 즉시로딩과 지연로딩은 N+1 문제를 일으킨다,.
+- ToOne은 기본이 즉시로딩 -> LAZY로 설정
+- ToMany는 기본이 지연로딩
+
+영속성 전이 : CASCADE
+- 특정 엔티티를 영속 상태로 만들 때 연관된 엔티티도 함께 영속 상태로 만들고 싶을 때
+ex) 부모 엔티티를 저장할 때 자식 엔티티도 함께 저장
+- 영속성 전이는 연관관계를 매핑하는 것과 아무 관련이 없다, 
+  엔티티를 영속화할 때 연관된 엔티티도 함께 영속화하는 편리함을 제공할 뿐
+
+CASCADE의 종류
+- ALL(모두 적용)
+- PERSIST(영속)
+- REMOVE(삭제)
+
+고아 객체
+고아 객체 제거 : 부모 엔티티와 연관관계가 끊어진 자식 엔티티를 자동으로 삭제
+orphanRemoval = true
+ex)
+Parent parent1 = em.find(Parent.class, id);
+parent1.getChildren().remove(0);
+// 자식 엔티티를 컬렉션에서 제거
+
+주의사항
+- 참조하는 곳이 하나일 때 사용해야한다.
+- 특정 엔티티가 개인 소유할 때 사용
+ex) 게시판 댓글, 카테고리 등등
+
+영속성 전이 + 고아 객체, 생명주기
+- CascadeType.ALL + orphanRemovel = true
+- 스스로 생명주기를 관리하는 엔티티는 em.persist()로 영속화,
+  em.remove()로 제거
+- 두 옵션을 모두 활성화 하면 부모 엔티티를 통해서 자식의 생명 주기를 관리할 수 있음
+
+연관관계 관리
+
+
+
+
+
+
+
+
+
+
